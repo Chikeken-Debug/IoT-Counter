@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boards Counter</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            font-weight: bold;
+            font-family: 'Calibri'
+        }
+
+        body {
+            background-color: rgb(34, 45, 57);
+        }
+
+        .NavBar {
+            background-color: #0AD666;
+            padding: 20px 10px;
+        }
+
+        .NavBar h1 {
+            color: rgb(34, 45, 57);
+            font-size: 25px;
+        }
+
+        #reset {
+            height: 50px;
+            display: inline;
+            position: absolute;
+            margin-right: 10px;
+            right: 0px;
+            top: 12px;
+        }
+
+        .NavBar button {
+            background-color: rgb(34, 45, 57);
+            color: #0AD666;
+            border: 0;
+            border-radius: 25px;
+            padding: 15px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .NavBar button:active {
+            background-color: gray;
+        }
+
+        .mainScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            text-align: center;
+            border-radius: 25px;
+            padding: 10px;
+        }
+
+        .mainScreen h1 {
+            color: white;
+            font-size: 60px;
+        }
+
+        .mainScreen p {
+            color: white;
+            font-size: 30px;
+        }
+
+
+        #value {
+            color: #0AD666;
+            font-size: 130px;
+        }
+
+        #footer {
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+            padding: 10px;
+            background-color: white;
+            color: rgb(34, 45, 57);
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="NavBar">
+        <h1>Elswedey Electric</h1>
+        <div id="reset"><button type="button"><iframe src="\reset"
+                    style="visibility:hidden;display:none"></iframe>reset</button>
+        </div>
+    </div>
+    <div class="mainScreen">
+        <p><span id="value">70</span> Item</p>
+        <h1>Is Checked</h1>
+    </div>
+    <section id="footer">
+        Powered By EMEIH
+    </section>
+
+</body>
+
+</html>
