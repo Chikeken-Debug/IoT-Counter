@@ -19,7 +19,9 @@
  * Problem: ESP stuck in the clint loop 
  *  Cause : The ESP enster the While(client) but doesn't enter if(client.available)
  *  sol : make a time out 1500 msec for the client 
- *  
+ ***********************************
+ * Problem bad user i inteaction
+ *  sol :Add led
  */
 #define LENGTH(x) (strlen(x) + 1)   // length of char string
 

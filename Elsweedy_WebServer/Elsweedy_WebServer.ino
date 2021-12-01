@@ -71,6 +71,8 @@ void Setup(void)
   attachInterrupt(button1.PIN, isr1, HIGH);
   attachInterrupt(resetButton.PIN, isr2, HIGH);
   Serial.println("Done Setup Func");
+
+  digitalWrite(LED , LOW);
 }
 void EEPROM_Setup(void)
 {
@@ -112,6 +114,7 @@ void connectWifi()
     Serial.print("Connected to ");
     Serial.println(ssid);
     Serial.print("IP address: ");
+      digitalWrite(LED , HIGH);
     Serial.println(WiFi.localIP());
     server.begin();
     Serial.println("HTTP server started");
@@ -154,6 +157,7 @@ void button_Click()
   if ( !digitalRead(AccessPointPin) ) {
     delay(4000);
     if ( !digitalRead(AccessPointPin) ) {
+        digitalWrite(LED , LOW);
       Serial.println("Inside Button_Click_Access_loop");
       Serial.println("AccessPoint clicked");
       writeStringToFlash("1", 100);
@@ -322,7 +326,7 @@ void client_handle()
               ssid = ssid.substring(url.indexOf('=') + 1, url.indexOf('&'));
               ssid = urlParse(ssid);
               Serial.println("ssid  :  " + ssid);
-             
+
               p2 = url.substring(url.indexOf('&') + 1);
               password = p2;
               password = password.substring(p2.indexOf('=') + 1, p2.indexOf('&'));
@@ -352,6 +356,10 @@ void client_handle()
                 delay(700);
                 count++;
                 if (count >= 10) {
+                    digitalWrite(LED , HIGH);
+delay(200);
+  digitalWrite(LED , LOW);
+
                   break;
                 }
               }
@@ -470,9 +478,7 @@ String returnHtml(int value)
 
 
 String urlParse(String url) {
-  Serial.println();  
-  Serial.println("URL befor decodeing => " + url );
-    url.replace("+" , " ");
+  url.replace("+" , " ");
   url.replace("%20" , " ");
   url.replace("%21" , "!");
   url.replace("%22" , "\"");
@@ -496,8 +502,5 @@ String urlParse(String url) {
   url.replace("%3E" , ">");
   url.replace("%3F" , "?");
   url.replace("%40" , "@");
-  Serial.println("URL after decodeing => " + url );
-  Serial.println();  
-
   return url ;
 }
