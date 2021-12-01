@@ -114,7 +114,7 @@ void connectWifi()
     Serial.print("Connected to ");
     Serial.println(ssid);
     Serial.print("IP address: ");
-      digitalWrite(LED , HIGH);
+    digitalWrite(LED , HIGH);
     Serial.println(WiFi.localIP());
     server.begin();
     Serial.println("HTTP server started");
@@ -157,7 +157,7 @@ void button_Click()
   if ( !digitalRead(AccessPointPin) ) {
     delay(4000);
     if ( !digitalRead(AccessPointPin) ) {
-        digitalWrite(LED , LOW);
+      digitalWrite(LED , LOW);
       Serial.println("Inside Button_Click_Access_loop");
       Serial.println("AccessPoint clicked");
       writeStringToFlash("1", 100);
@@ -355,10 +355,10 @@ void client_handle()
               while (WiFi.status() != WL_CONNECTED) {
                 delay(700);
                 count++;
-                if (count >= 10) {
-                    digitalWrite(LED , HIGH);
-delay(200);
-  digitalWrite(LED , LOW);
+                if (count > 10) {
+                  digitalWrite(LED , HIGH);
+                  delay(200);
+                  digitalWrite(LED , LOW);
 
                   break;
                 }
@@ -470,14 +470,54 @@ String returnHtml(int value)
          "<p1>Is Checked</p1>"\
          "</div>"\
          "<section id=\"footer\">"\
-         "Powered By EMEIH"\
+         "Powered By EME IH"\
          "</section>"\
          "</body>"\
          "</html>" ;
 }
 
 
-String urlParse(String url) {
+String urlParse(String url)
+{
+    String encodedString="";
+    char c , code0, code1 ;
+
+    for (int i =0; i < url.length(); i++){ // loop throw the String
+        c=url.charAt(i); // get the charahter
+      if (c == '+'){ // if + replace with space
+        c = ' ';  
+      }else if (c == '%') { // if % so start of special charachter 
+        i++; 
+        code0=url.charAt(i); // the first charachter after %
+        i++;
+        code1=url.charAt(i); // the second charachter after %
+        c = (h2int(code0) << 4) | h2int(code1); // convert the hex to int to get the asci
+      }
+        encodedString+=c;        
+    }
+
+   return encodedString;
+}
+
+unsigned char h2int(char c)
+{
+  // function to convert hex to int to get the asci code 
+    if (c >= '0' && c <='9'){ 
+        return((unsigned char)c - '0');
+    }
+    if (c >= 'a' && c <='f'){
+        return((unsigned char)c - 'a' + 10);
+    }
+    if (c >= 'A' && c <='F'){
+        return((unsigned char)c - 'A' + 10);
+    }
+    return(0);
+}
+
+
+
+
+String decodeOld(String url) {
   url.replace("+" , " ");
   url.replace("%20" , " ");
   url.replace("%21" , "!");
