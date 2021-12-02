@@ -130,4 +130,3 @@ int ResetFlag = 0;
 uint32_t now_millis=0;
 uint32_t prev_millis=0;
 uint32_t reset_prev_millis = 0;
-uint32_t timeToCheck = 0 ; // variable that will use to schedule checks every 10 sec

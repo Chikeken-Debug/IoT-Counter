@@ -21,11 +21,7 @@ void loop(void)
   button_Click();
   handleSeverClient();
   resetCounter();
-
-  if (millis() - timeToCheck > 10000) {     // function every 10 seconds:
-    every10Seconds();
-    timeToCheck = millis();
-  }
+  checkConnectivity();
 }
 
 /********************************************** ISR Functions *********************************************/
@@ -153,6 +149,9 @@ void button_Click()
       digitalWrite(LED , LOW);
       Serial.println("Inside Button_Click_Access_loop");
       Serial.println("AccessPoint clicked");
+      // write sensor value to flash
+      Serial.println("Writing value < " + String(SensorValue) + " > to EEPROM" );
+      writeStringToFlash(String(SensorValue).c_str() , 150);
       writeStringToFlash("1", 100);
       ESP.restart();
     }
@@ -211,11 +210,7 @@ void handleSeverClient()
   }
 }
 
-void every10Seconds() {
-  // write sensor value to flash
-  Serial.println("Writing value < " + String(SensorValue) + " > to EEPROM" );
-  writeStringToFlash(String(SensorValue).c_str() , 150);
-
+void checkConnectivity() {
   // check for wifi for recoonect function
   Serial.println("WIFI CHECK Time ");
   if (WiFi.status() == WL_CONNECTED) return ;
@@ -250,6 +245,8 @@ void resetCounter()
     Serial.println("Reset Button Clicked");
     sendData("value=" + String(SensorValue));
     SensorValue = 0;
+    Serial.println("Writing value 0 to EEPROM" );
+    writeStringToFlash("0" , 150);
     digitalWrite(ResetOutSignal, HIGH);
     Serial.println("new value posted");
     ResetFlag = 0;
@@ -272,6 +269,7 @@ void Gen_access_point()
       break;
     }
   }
+
   writeStringToFlash("0", 100);
   ESP.restart();
 }
