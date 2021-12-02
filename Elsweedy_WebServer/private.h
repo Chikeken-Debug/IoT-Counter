@@ -121,7 +121,7 @@ String header;
 String ssid;
 String password;
 
-int SensorValue = 0;
+unsigned int SensorValue = 0;
 
 bool exit_but = false;
 int count =0;
@@ -130,3 +130,4 @@ int ResetFlag = 0;
 uint32_t now_millis=0;
 uint32_t prev_millis=0;
 uint32_t reset_prev_millis = 0;
+uint32_t timeToCheck = 0 ; // variable that will use to schedule checks every 10 sec

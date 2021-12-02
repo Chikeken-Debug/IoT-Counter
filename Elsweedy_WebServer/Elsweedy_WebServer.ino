@@ -7,8 +7,6 @@ WiFiServer server(80);
 WiFiServer server2(80);
 
 
-
-
 void setup(void)
 {
   Setup();
@@ -23,28 +21,14 @@ void loop(void)
   button_Click();
   handleSeverClient();
   resetCounter();
+
+  if (millis() - timeToCheck > 10000) {     // function every 10 seconds:
+    every10Seconds();
+    timeToCheck = millis();
+  }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/********************************************** ISR Functions *********************************************/
 void IRAM_ATTR isr2()
 {
   Serial.println("ISR2 Called");
@@ -58,13 +42,14 @@ void IRAM_ATTR isr1()
   button1.pressed = true;
   prev_millis = millis();
 }
+
 /********************************************** Setup Functions *********************************************/
 void Setup(void)
 {
   Serial.begin(115200);
   pinMode(LED, OUTPUT);
   pinMode(ResetOutSignal, OUTPUT);
-  pinMode(button1.PIN, INPUT_PULLUP); // agreed
+  pinMode(button1.PIN, INPUT_PULLUP);
   pinMode(ResetButtonPin, INPUT_PULLUP);
   pinMode(AccessPointPin, INPUT_PULLUP);
 
@@ -74,6 +59,7 @@ void Setup(void)
 
   digitalWrite(LED , LOW);
 }
+
 void EEPROM_Setup(void)
 {
   EEPROM.begin(EEPROM_SIZE);
@@ -83,8 +69,12 @@ void EEPROM_Setup(void)
   password = readStringFromFlash(40); // Read Password stored at address 40
   Serial.print("passwords = ");
   Serial.println(password);
+  SensorValue = readStringFromFlash(150).toInt();   // Read the initial sensor value at address 150
+  Serial.println("initial sensor value " + String(SensorValue)  );
+
   Serial.println("Done EEPROM Setup Func");
 }
+
 void connectWifi()
 {
   if (readStringFromFlash(100) == "1")
@@ -119,7 +109,8 @@ void connectWifi()
     server.begin();
     Serial.println("HTTP server started");
   }
-  Serial.println("Done WiFi_Setup Func");
+
+
 }
 
 
@@ -134,6 +125,7 @@ void short_interpt()
     Serial.println(SensorValue);
   }
 }
+
 void interpt()
 {
   now_millis = millis();
@@ -151,11 +143,12 @@ void interpt()
   Serial.println(SensorValue);
   delay(1000);
 }
+
 void button_Click()
 {
   // Serial.println("Inside Button_Click");
   if ( !digitalRead(AccessPointPin) ) {
-    delay(4000);
+    delay(2000);
     if ( !digitalRead(AccessPointPin) ) {
       digitalWrite(LED , LOW);
       Serial.println("Inside Button_Click_Access_loop");
@@ -165,6 +158,7 @@ void button_Click()
     }
   }
 }
+
 void handleSeverClient()
 {
   WiFiClient client = server.available();   // Listen for incoming clients
@@ -217,8 +211,36 @@ void handleSeverClient()
   }
 }
 
+void every10Seconds() {
+  // write sensor value to flash
+  Serial.println("Writing value < " + String(SensorValue) + " > to EEPROM" );
+  writeStringToFlash(String(SensorValue).c_str() , 150);
 
-
+  // check for wifi for recoonect function
+  Serial.println("WIFI CHECK Time ");
+  if (WiFi.status() == WL_CONNECTED) return ;
+  digitalWrite(LED , LOW );
+  int tryCounts = 0;
+  WiFi.disconnect();
+  WiFi.begin(ssid.c_str(), password.c_str());
+  Serial.println("try reConnecting ... ");
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    button_Click();
+    Serial.print(".");
+    delay(1000);
+    if (tryCounts ++ >= 10) break ; // try for 10 seconds only
+  }
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("");
+    Serial.print("Connected again sucess ");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    digitalWrite(LED , HIGH);
+  }
+}
 
 /********************************************** Helpful Functions *********************************************/
 void resetCounter()
@@ -233,6 +255,7 @@ void resetCounter()
     ResetFlag = 0;
   }
 }
+
 void Gen_access_point()
 {
   Serial.println("Inside Gen_accesss_point");
@@ -252,6 +275,7 @@ void Gen_access_point()
   writeStringToFlash("0", 100);
   ESP.restart();
 }
+
 void sendData(String params)
 {
 
@@ -286,6 +310,7 @@ String readStringFromFlash(int startAddr)
   }
   return String(in);
 }
+
 void client_handle()
 {
   WiFiClient client = server2.available();
@@ -357,7 +382,7 @@ void client_handle()
                 count++;
                 if (count > 10) {
                   digitalWrite(LED , HIGH);
-                  delay(200);
+                  delay(250);
                   digitalWrite(LED , LOW);
 
                   break;
@@ -383,6 +408,7 @@ void client_handle()
 
   }
 }
+
 String returnHtml(int value)
 {
   return "<DOCTYPE html>"\
@@ -479,68 +505,36 @@ String returnHtml(int value)
 
 String urlParse(String url)
 {
-    String encodedString="";
-    char c , code0, code1 ;
+  String encodedString = "";
+  char c , code0, code1 ;
 
-    for (int i =0; i < url.length(); i++){ // loop throw the String
-        c=url.charAt(i); // get the charahter
-      if (c == '+'){ // if + replace with space
-        c = ' ';  
-      }else if (c == '%') { // if % so start of special charachter 
-        i++; 
-        code0=url.charAt(i); // the first charachter after %
-        i++;
-        code1=url.charAt(i); // the second charachter after %
-        c = (h2int(code0) << 4) | h2int(code1); // convert the hex to int to get the asci
-      }
-        encodedString+=c;        
+  for (int i = 0; i < url.length(); i++) { // loop throw the String
+    c = url.charAt(i); // get the charahter
+    if (c == '+') { // if + replace with space
+      c = ' ';
+    } else if (c == '%') { // if % so start of special charachter
+      i++;
+      code0 = url.charAt(i); // the first charachter after %
+      i++;
+      code1 = url.charAt(i); // the second charachter after %
+      c = (h2int(code0) << 4) | h2int(code1); // convert the hex to int to get the asci
     }
-
-   return encodedString;
+    encodedString += c;
+  }
+  return encodedString;
 }
 
 unsigned char h2int(char c)
 {
-  // function to convert hex to int to get the asci code 
-    if (c >= '0' && c <='9'){ 
-        return((unsigned char)c - '0');
-    }
-    if (c >= 'a' && c <='f'){
-        return((unsigned char)c - 'a' + 10);
-    }
-    if (c >= 'A' && c <='F'){
-        return((unsigned char)c - 'A' + 10);
-    }
-    return(0);
-}
-
-
-
-
-String decodeOld(String url) {
-  url.replace("+" , " ");
-  url.replace("%20" , " ");
-  url.replace("%21" , "!");
-  url.replace("%22" , "\"");
-  url.replace("%23" , "#");
-  url.replace("%24" , "$");
-  url.replace("%25" , "%");
-  url.replace("%26" , "&");
-  url.replace("%27" , "'");
-  url.replace("%28" , "(");
-  url.replace("%29" , ")");
-  url.replace("%2A" , "*");
-  url.replace("%2B" , "+");
-  url.replace("%2C" , ",");
-  url.replace("%2D" , "-");
-  url.replace("%2E" , ".");
-  url.replace("%2F" , "/");
-  url.replace("%3A" , ":");
-  url.replace("%3B" , ";");
-  url.replace("%3C" , "<");
-  url.replace("%3D" , "=");
-  url.replace("%3E" , ">");
-  url.replace("%3F" , "?");
-  url.replace("%40" , "@");
-  return url ;
+  // function to convert hex to int to get the asci code
+  if (c >= '0' && c <= '9') {
+    return ((unsigned char)c - '0');
+  }
+  if (c >= 'a' && c <= 'f') {
+    return ((unsigned char)c - 'a' + 10);
+  }
+  if (c >= 'A' && c <= 'F') {
+    return ((unsigned char)c - 'A' + 10);
+  }
+  return (0);
 }
