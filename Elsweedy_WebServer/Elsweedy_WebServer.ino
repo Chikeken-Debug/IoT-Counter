@@ -223,6 +223,7 @@ void checkConnectivity() {
   while (WiFi.status() != WL_CONNECTED)
   {
     button_Click();
+    short_interpt();
     Serial.print(".");
     delay(1000);
     if (tryCounts ++ >= 10) break ; // try for 10 seconds only
