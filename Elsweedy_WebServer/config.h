@@ -9,7 +9,9 @@
 #include <WiFiClient.h>
 #include "EEPROM.h"
 #include <HTTPClient.h>
+#include <HTTPUpdate.h>
 #include "private.h"
+
 
 String GOOGLE_SCRIPT_ID = "AKfycbz7XcVfZQgc8TxbtES0GVVWpOq4TJX7MsuAgVyPu3tOtFQkM9yyU4SJaxDuslaLYvgq"; 
 

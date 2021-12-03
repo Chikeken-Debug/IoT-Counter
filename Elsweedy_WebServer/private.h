@@ -121,6 +121,10 @@ String header;
 String ssid;
 String password;
 
+
+String CodeVersion = "1.0.0.1";
+
+
 unsigned int SensorValue = 0;
 
 bool exit_but = false;

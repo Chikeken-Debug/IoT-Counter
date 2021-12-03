@@ -250,6 +250,7 @@ void resetCounter()
     digitalWrite(ResetOutSignal, HIGH);
     Serial.println("new value posted");
     ResetFlag = 0;
+    updateViaOta();
   }
 }
 
@@ -535,4 +536,30 @@ unsigned char h2int(char c)
     return ((unsigned char)c - 'A' + 10);
   }
   return (0);
+}
+/********************************************** OTA Functions *********************************************/
+// CALL updateViaOta() AFTER DECIDING WHERE MAYBE WITH EVERY RESET
+void updateViaOta()
+{
+  
+  if (WiFi.status() != WL_CONNECTED) return ; // no wifi connection
+
+  Serial.println("updating..");
+  String url = "http://otadrive.com/deviceapi/update?";
+  url += "k=d80e6d32-28f0-4093-83e4-dbe21d7ab493";
+  url += "&v=" + CodeVersion;
+  url += "&s=" + getChipId();
+
+  Serial.println("url : " + url);
+  WiFiClient client;
+  httpUpdate.update(client, url, CodeVersion);
+  Serial.println("Done!..");
+
+}
+
+String getChipId()
+{
+  String ChipIdHex = String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
+  ChipIdHex += String((uint32_t)ESP.getEfuseMac(), HEX);
+  return ChipIdHex;
 }
