@@ -29,6 +29,8 @@
  * Problem: Use ESP8266 
  *  sol : use ifdef
  */
+
+ 
 #define LENGTH(x) (strlen(x) + 1)   // length of char string
 
 #define htmlConfigurationString "<!DOCTYPE html>"\

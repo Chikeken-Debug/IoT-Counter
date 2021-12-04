@@ -39,8 +39,7 @@ String GOOGLE_SCRIPT_ID = "AKfycbz7XcVfZQgc8TxbtES0GVVWpOq4TJX7MsuAgVyPu3tOtFQkM
 #define LED 2
 #define SensorPin 15
 #define ResetButtonPin 21
-//#define AccessPointPin 18
-#define AccessPointPin 9
+#define AccessPointPin 18
 #define ResetOutSignal 5
 /*************************************/
 struct Button {

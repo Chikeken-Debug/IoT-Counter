@@ -105,10 +105,7 @@ void connectWifi()
     server.begin();
     Serial.println("HTTP server started");
   }
-
-
 }
-
 
 /********************************************** Loop Functions *********************************************/
 void short_interpt()
@@ -137,7 +134,7 @@ void interpt()
   Serial.print(digitalRead(button1.PIN));
   Serial.print("  ");
   Serial.println(SensorValue);
-  delay(1000);
+  //delay(1000);
 }
 
 void button_Click()
@@ -217,6 +214,7 @@ void checkConnectivity() {
   if (WiFi.status() == WL_CONNECTED) return ;
   digitalWrite(LED , LOW );
   int tryCounts = 0;
+
   WiFi.disconnect();
   WiFi.begin(ssid.c_str(), password.c_str());
   Serial.println("try reConnecting ... ");
@@ -279,7 +277,6 @@ void Gen_access_point()
 
 void sendData(String params)
 {
-
   HTTPClient http;
 
   String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + params;
@@ -296,7 +293,6 @@ void sendData(String params)
   http.begin(url );
 #endif
 
-
   delay(2000);
   int httpCode = http.GET();
   http.end();
@@ -305,6 +301,7 @@ void sendData(String params)
   }
   Serial.println(": done " + String(httpCode));
 }
+
 void writeStringToFlash(const char* toStore, int startAddr)
 {
   int i = 0;
@@ -371,7 +368,6 @@ void client_handle()
               password = urlParse(password);
 
               Serial.println("password  :  " + password);
-
 
               writeStringToFlash(ssid.c_str(), 0);
               writeStringToFlash(password.c_str(), 40);
@@ -515,7 +511,6 @@ String returnHtml(int value)
          "</html>" ;
 }
 
-
 String urlParse(String url)
 {
   String encodedString = "";
@@ -551,25 +546,19 @@ unsigned char h2int(char c)
   }
   return (0);
 }
-/********************************************** OTA Functions *********************************************/
-// CALL updateViaOta() AFTER DECIDING WHERE MAYBE WITH EVERY RESET
+
 void updateViaOta()
 {
-
   if (WiFi.status() != WL_CONNECTED) return ; // no wifi connection
 
   Serial.println("updating..");
-
-
   String url = "http://otadrive.com/deviceapi/update?";
   url += "k=d80e6d32-28f0-4093-83e4-dbe21d7ab493";
   url += "&v=" + CodeVersion;
   url += "&s=" + String(chipID) ;
 
-
   Serial.println("url : " + url);
   WiFiClient client;
-
 
 #ifdef ESP8266
   t_httpUpdate_return ret = ESPhttpUpdate.update(client , url, CodeVersion);
@@ -586,15 +575,13 @@ void updateViaOta()
     case HTTP_UPDATE_NO_UPDATES:
       Serial.println("No new update available");
       break;
-    // We can't see this, because of reset chip after update OK
     case HTTP_UPDATE_OK:
+      // We can't see this, because of reset chip after update OK
       Serial.println("Update OK");
       break;
-
     default:
       break;
   }
-
-  //httpUpdate.update(client, url, CodeVersion);
   Serial.println("Done!..");
 }
+/********************************************** Congratulation *********************************************/
