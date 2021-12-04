@@ -20,8 +20,14 @@
  *  Cause : The ESP enster the While(client) but doesn't enter if(client.available)
  *  sol : make a time out 1500 msec for the client 
  ***********************************
- * Problem bad user i inteaction
- *  sol :Add led
+ * Problem: bad user interaction
+ *  sol : Add led
+ ************************************
+ * Problem: update while work
+ *  sol :use OTA drive
+ ************************************
+ * Problem: Use ESP8266 
+ *  sol : use ifdef
  */
 #define LENGTH(x) (strlen(x) + 1)   // length of char string
 
@@ -122,7 +128,7 @@ String ssid;
 String password;
 
 
-String CodeVersion = "1.0.0.1";
+String CodeVersion = "1.0.0.3";
 
 
 unsigned int SensorValue = 0;

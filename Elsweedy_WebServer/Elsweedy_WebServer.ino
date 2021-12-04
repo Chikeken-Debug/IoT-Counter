@@ -142,8 +142,9 @@ void interpt()
 
 void button_Click()
 {
-  // Serial.println("Inside Button_Click");
+  Serial.println("Inside Button_Click");
   if ( !digitalRead(AccessPointPin) ) {
+    Serial.println("Inside Button_Clicked");
     delay(2000);
     if ( !digitalRead(AccessPointPin) ) {
       digitalWrite(LED , LOW);
@@ -280,17 +281,29 @@ void sendData(String params)
 {
 
   HTTPClient http;
+
   String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + params;
   Serial.println(url);
   Serial.println("Making a request");
-  http.begin(url);
+
+#ifdef ESP8266
+  WiFiClientSecure client;
+  client.setInsecure(); //the magic line, use with caution
+  client.connect("https://script.google.com", 443);
+  http.begin(client , url );
+#endif
+#ifdef ESP32
+  http.begin(url );
+#endif
+
+
   delay(2000);
   int httpCode = http.GET();
   http.end();
   if (httpCode == HTTP_CODE_OK) {
     Serial.println(":OK ");
   }
-  Serial.println(": done " + httpCode);
+  Serial.println(": done " + String(httpCode));
 }
 void writeStringToFlash(const char* toStore, int startAddr)
 {
@@ -542,25 +555,46 @@ unsigned char h2int(char c)
 // CALL updateViaOta() AFTER DECIDING WHERE MAYBE WITH EVERY RESET
 void updateViaOta()
 {
-  
+
   if (WiFi.status() != WL_CONNECTED) return ; // no wifi connection
 
   Serial.println("updating..");
+
+
   String url = "http://otadrive.com/deviceapi/update?";
   url += "k=d80e6d32-28f0-4093-83e4-dbe21d7ab493";
   url += "&v=" + CodeVersion;
-  url += "&s=" + getChipId();
+  url += "&s=" + String(chipID) ;
+
 
   Serial.println("url : " + url);
   WiFiClient client;
-  httpUpdate.update(client, url, CodeVersion);
+
+
+#ifdef ESP8266
+  t_httpUpdate_return ret = ESPhttpUpdate.update(client , url, CodeVersion);
+#endif
+#ifdef ESP32
+  t_httpUpdate_return ret = httpUpdate.update(client , url, CodeVersion);
+#endif
+
+  switch (ret)
+  {
+    case HTTP_UPDATE_FAILED:
+      Serial.println("Update faild!");
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      Serial.println("No new update available");
+      break;
+    // We can't see this, because of reset chip after update OK
+    case HTTP_UPDATE_OK:
+      Serial.println("Update OK");
+      break;
+
+    default:
+      break;
+  }
+
+  //httpUpdate.update(client, url, CodeVersion);
   Serial.println("Done!..");
-
-}
-
-String getChipId()
-{
-  String ChipIdHex = String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
-  ChipIdHex += String((uint32_t)ESP.getEfuseMac(), HEX);
-  return ChipIdHex;
 }
