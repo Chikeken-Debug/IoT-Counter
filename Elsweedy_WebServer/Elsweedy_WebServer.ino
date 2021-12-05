@@ -1,11 +1,8 @@
 #include "config.h"
 
 Button button1 = {SensorPin, false};
-Button resetButton = {ResetButtonPin, false};
 
 WiFiServer server(80);
-WiFiServer server2(80);
-
 
 void setup(void)
 {
@@ -16,25 +13,16 @@ void setup(void)
 
 void loop(void)
 {
-  Serial.println("in loop");
   interpt();
   button_Click();
   handleSeverClient();
-  resetCounter();
   checkConnectivity();
 }
 
 /********************************************** ISR Functions *********************************************/
-void IRAM_ATTR isr2()
-{
-  Serial.println("ISR2 Called");
-  resetButton.pressed = true;
-  ResetFlag = 1;
-}
-
 void IRAM_ATTR isr1()
 {
-  Serial.println("ISR1 Called");
+  Serial.println("ISR Called");
   button1.pressed = true;
   prev_millis = millis();
 }
@@ -44,14 +32,10 @@ void Setup(void)
 {
   Serial.begin(115200);
   pinMode(LED, OUTPUT);
-  pinMode(ResetOutSignal, OUTPUT);
   pinMode(button1.PIN, INPUT_PULLUP);
-  pinMode(ResetButtonPin, INPUT_PULLUP);
-  pinMode(AccessPointPin, INPUT_PULLUP);
 
   attachInterrupt(button1.PIN, isr1, HIGH);
-  attachInterrupt(resetButton.PIN, isr2, HIGH);
-  Serial.println("Done Setup Func");
+  // Serial.println("Done Setup Func");
 
   digitalWrite(LED , LOW);
 }
@@ -60,15 +44,41 @@ void EEPROM_Setup(void)
 {
   EEPROM.begin(EEPROM_SIZE);
   ssid = readStringFromFlash(0); // Read SSID stored at address 0
-  Serial.print("SSID = ");
-  Serial.println(ssid);
+  //Serial.print("SSID = ");
+  //Serial.println(ssid);
   password = readStringFromFlash(40); // Read Password stored at address 40
-  Serial.print("passwords = ");
-  Serial.println(password);
-  SensorValue = readStringFromFlash(150).toInt();   // Read the initial sensor value at address 150
-  Serial.println("initial sensor value " + String(SensorValue)  );
+  //Serial.print("passwords = ");
+  //Serial.println(password);
+  SensorValue = readStringFromFlash(120).toInt();   // Read the initial sensor value at address 150
+  //Serial.println("initial sensor value " + String(SensorValue)  );
 
-  Serial.println("Done EEPROM Setup Func");
+  // Read IP from address 150
+  int ip1 = readintFromFlash(150);
+  int ip2 = readintFromFlash(151);
+  int ip3 = readintFromFlash(152);
+  int ip4 = readintFromFlash(153);
+  IPAddress local_IP_temp(ip1, ip2, ip3, ip4);
+  local_IP = local_IP_temp;
+  // Read gatway IP from address 154
+  int gat1 = readintFromFlash(154);
+  int gat2 = readintFromFlash(155);
+  int gat3 = readintFromFlash(156);
+  int gat4 = readintFromFlash(157);
+  IPAddress gateway_temp(gat1, gat2, gat3, gat4);
+  gateway = gateway_temp;
+  // Read subnet IP from address 154
+  int sub1 = readintFromFlash(158);
+  int sub2 = readintFromFlash(159);
+  int sub3 = readintFromFlash(160);
+  int sub4 = readintFromFlash(161);
+  IPAddress subnet_temp(sub1, sub2, sub3, sub4);
+  subnet = gateway_temp;
+
+  //  Serial.println("initial IP " + local_IP_temp.toString()  );
+  //  Serial.println("initial gatway " + gateway_temp.toString()  );
+  //  Serial.println("initial subnet " + gateway_temp.toString()  );
+  //
+  //  Serial.println("Done EEPROM Setup Func");
 }
 
 void connectWifi()
@@ -78,7 +88,7 @@ void connectWifi()
     Gen_access_point();
   }
   button_Click();
-  // Configures static IP address
+  //Configures static IP address
   if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
     Serial.println("STA Failed to configure");
   }
@@ -87,12 +97,18 @@ void connectWifi()
   WiFi.begin(ssid.c_str(), password.c_str());
 
   Serial.println("");
+  int tryCount = 0 ;
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED)
   {
     button_Click();
+    tryCount ++ ;
     Serial.print(".");
     delay(500);
+
+    if (tryCount > 30) {
+      ESP.restart();
+    }
   }
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -103,7 +119,7 @@ void connectWifi()
     digitalWrite(LED , HIGH);
     Serial.println(WiFi.localIP());
     server.begin();
-    Serial.println("HTTP server started");
+    // Serial.println("HTTP server started");
   }
 }
 
@@ -125,31 +141,31 @@ void interpt()
   if ((button1.pressed == true) && (now_millis > prev_millis) && (digitalRead(button1.PIN) == 1))
   {
     button1.pressed = false;
-    Serial.println("Interrupt Release");
+    //Serial.println("Interrupt Release");
     SensorValue++;
     Serial.printf("Button 1 has been pressed %u times\n", SensorValue);
   }
-  Serial.print(button1.pressed);
-  Serial.print("  ");
-  Serial.print(digitalRead(button1.PIN));
-  Serial.print("  ");
-  Serial.println(SensorValue);
-  //delay(1000);
+  //  Serial.print(button1.pressed);
+  //  Serial.print("  ");
+  //  Serial.print(digitalRead(button1.PIN));
+  //  Serial.print("  ");
+  //  Serial.println(SensorValue);
+  delay(200);
 }
 
 void button_Click()
 {
-  Serial.println("Inside Button_Click");
+  //Serial.println("Inside Button_Click");
   if ( !digitalRead(AccessPointPin) ) {
-    Serial.println("Inside Button_Clicked");
+    //Serial.println("Inside Button_Clicked");
     delay(2000);
     if ( !digitalRead(AccessPointPin) ) {
       digitalWrite(LED , LOW);
-      Serial.println("Inside Button_Click_Access_loop");
+      //Serial.println("Inside Button_Click_Access_loop");
       Serial.println("AccessPoint clicked");
       // write sensor value to flash
-      Serial.println("Writing value < " + String(SensorValue) + " > to EEPROM" );
-      writeStringToFlash(String(SensorValue).c_str() , 150);
+      //Serial.println("Writing value < " + String(SensorValue) + " > to EEPROM" );
+      writeStringToFlash(String(SensorValue).c_str() , 120);
       writeStringToFlash("1", 100);
       ESP.restart();
     }
@@ -158,6 +174,8 @@ void button_Click()
 
 void handleSeverClient()
 {
+  //Serial.println("check Client.");          // print a message out in the serial port
+
   WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {        // If a new client connects,
@@ -181,10 +199,11 @@ void handleSeverClient()
             client.println();
 
             if (header.indexOf("GET /reset") >= 0) {
-              ResetFlag = 1;
+              //ResetFlag = 1;
+              resetCounter();
             }
-            client.println(returnHtml(SensorValue));
-            Serial.println("put the data");
+            client.println(returnHtml(String(SensorValue) , false ));
+            //        Serial.println("put the data");
             break;
           } else {
             currentLine = "";
@@ -195,7 +214,7 @@ void handleSeverClient()
       }
       clientCount ++ ;
       if (clientCount > 1500) { // timout 1.5 sec for the client
-        Serial.println("hero action");
+        //  Serial.println("hero action");
         break ;
       }
     }
@@ -204,13 +223,13 @@ void handleSeverClient()
     // Close the connection
     client.stop();
     Serial.println("Client disconnected.");
-    Serial.println("");
+    //Serial.println("");
   }
 }
 
 void checkConnectivity() {
   // check for wifi for recoonect function
-  Serial.println("WIFI CHECK Time ");
+  //Serial.println("WIFI CHECK Time ");
   if (WiFi.status() == WL_CONNECTED) return ;
   digitalWrite(LED , LOW );
   int tryCounts = 0;
@@ -230,7 +249,7 @@ void checkConnectivity() {
   if (WiFi.status() == WL_CONNECTED)
   {
     Serial.println("");
-    Serial.print("Connected again sucess ");
+    Serial.println("Connected again sucess ");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     digitalWrite(LED , HIGH);
@@ -240,28 +259,23 @@ void checkConnectivity() {
 /********************************************** Helpful Functions *********************************************/
 void resetCounter()
 {
-  if (ResetFlag == 1)
-  {
-    Serial.println("Reset Button Clicked");
-    sendData("value=" + String(SensorValue));
-    SensorValue = 0;
-    Serial.println("Writing value 0 to EEPROM" );
-    writeStringToFlash("0" , 150);
-    digitalWrite(ResetOutSignal, HIGH);
-    Serial.println("new value posted");
-    ResetFlag = 0;
-    updateViaOta();
-  }
+  //Serial.println("Reset Button Clicked");
+  sendData("value=" + String(SensorValue));
+  SensorValue = 0;
+  //Serial.println("Writing value 0 to EEPROM" );
+  writeStringToFlash("0" , 120);
+  //Serial.println("new value posted");
+  updateViaOta();
 }
 
 void Gen_access_point()
 {
-  Serial.println("Inside Gen_accesss_point");
-  WiFi.softAP("wifi", "88888888");
+  //Serial.println("Inside Gen_accesss_point");
+  WiFi.softAP("Boards Counter", "88888888");
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  server2.begin();
+  server.begin();
 
   while (true) {
     client_handle();
@@ -284,12 +298,14 @@ void sendData(String params)
   Serial.println("Making a request");
 
 #ifdef ESP8266
+  //Serial.println("REQUESTting ESP8266");
   WiFiClientSecure client;
   client.setInsecure(); //the magic line, use with caution
   client.connect("https://script.google.com", 443);
   http.begin(client , url );
 #endif
 #ifdef ESP32
+  //Serial.println("REQUESTting ESP32");
   http.begin(url );
 #endif
 
@@ -311,6 +327,13 @@ void writeStringToFlash(const char* toStore, int startAddr)
   EEPROM.write(startAddr + i, '\0');
   EEPROM.commit();
 }
+
+void writeintToFlash(int toStore, int startAddr)
+{
+  EEPROM.write(startAddr, toStore);
+  EEPROM.commit();
+}
+
 String readStringFromFlash(int startAddr)
 {
   char in[128]; // char array of size 128 for reading the stored data
@@ -321,9 +344,14 @@ String readStringFromFlash(int startAddr)
   return String(in);
 }
 
+int readintFromFlash(int startAddr)
+{
+  return EEPROM.read(startAddr);
+}
+
 void client_handle()
 {
-  WiFiClient client = server2.available();
+  WiFiClient client = server.available();
   ssid = "";
   password = "";
 
@@ -337,17 +365,14 @@ void client_handle()
         Serial.write(c);
         header += c;
         if (c == '\n') {
-
           if (currentLine.length() == 0) {
-
             client.println("HTTP/1.1 200 OK");
             client.println("Content-type:text/html");
             client.println("Connection: close");
             client.println();
-            client.println(htmlConfigurationString);
-
-            if (header.indexOf("GET /?ssid") >= 0) {
-
+            client.println(wifiCorrect ? returnHtml(local_IP.toString() , true) : htmlConfigurationString);
+            
+            if ( header.indexOf("GET /?ssid") >= 0 && !wifiCorrect) {
               String url = header;
               ssid = "";
               password = "";
@@ -355,32 +380,28 @@ void client_handle()
 
               url = url.substring(4);
               url = url.substring(url.indexOf('='), url.indexOf(' '));
-              Serial.println("URL  :  " + url);
-
+              //Serial.println("URL  :  " + url);
               ssid = url;
               ssid = ssid.substring(url.indexOf('=') + 1, url.indexOf('&'));
               ssid = urlParse(ssid);
-              Serial.println("ssid  :  " + ssid);
+              //Serial.println("ssid  :  " + ssid);
 
               p2 = url.substring(url.indexOf('&') + 1);
               password = p2;
               password = password.substring(p2.indexOf('=') + 1, p2.indexOf('&'));
               password = urlParse(password);
-
-              Serial.println("password  :  " + password);
-
+              //Serial.println("password  :  " + password);
               writeStringToFlash(ssid.c_str(), 0);
               writeStringToFlash(password.c_str(), 40);
 
               count = 0;
-              Serial.println("before");
-
-              Serial.println(ssid);
-              Serial.println(password);
+              //Serial.println("before");
+              //Serial.println(ssid);
+              //Serial.println(password);
 
               ssid.replace("%20", " ");
               password.replace("%20", " ");
-              Serial.println("after");
+              //Serial.println("after");
               Serial.println(ssid);
               Serial.println(password);
               WiFi.begin(ssid.c_str(), password.c_str());
@@ -389,19 +410,49 @@ void client_handle()
               while (WiFi.status() != WL_CONNECTED) {
                 delay(700);
                 count++;
-                if (count > 10) {
+                if (count > 20) {
+                  Serial.println("Wrong Pass");
                   digitalWrite(LED , HIGH);
                   delay(250);
                   digitalWrite(LED , LOW);
-
+                  delay(250);
+                  digitalWrite(LED , HIGH);
+                  delay(250);
+                  digitalWrite(LED , LOW);
                   break;
                 }
               }
+              if (count < 20) {
+                wifiCorrect = true ;
+                digitalWrite(LED , HIGH);
+                //Serial.println("Wifi Correct");
+                //Serial.println(WiFi.localIP().toString());
 
-              if (count < 10) {
-                WiFi.mode(WIFI_STA);
-                exit_but = true;
+                IPAddress ipv4 = get_sweet_ip(WiFi.localIP(), WiFi.subnetMask());
+                local_IP = ipv4 ;
+                IPAddress subv4 = WiFi.subnetMask();
+                IPAddress gatev4 = WiFi.gatewayIP();
+                 // Write IP to eeprom
+                writeintToFlash( ipv4[0] , 150);
+                writeintToFlash( ipv4[1] , 151);
+                writeintToFlash( ipv4[2] , 152);
+                writeintToFlash( ipv4[3] , 153);
+                // Write sunbnet to eeprom
+                writeintToFlash( subv4[0] , 154);
+                writeintToFlash( subv4[1] , 155);
+                writeintToFlash( subv4[2] , 156);
+                writeintToFlash( subv4[3] , 157);
+                // Write gatway to eeprom
+                writeintToFlash( gatev4[0] , 158);
+                writeintToFlash( gatev4[1] , 159);
+                writeintToFlash( gatev4[2] , 160);
+                writeintToFlash( gatev4[3] , 161);
+
+                client.println(returnHtml(local_IP.toString() , true));
               }
+            } else if (header.indexOf("GET /reset") >= 0) {
+              //Serial.println("ok button Clicked");
+              exit_but = true;
             }
             break;
           } else {
@@ -418,21 +469,26 @@ void client_handle()
   }
 }
 
-String returnHtml(int value)
+String returnHtml(String  value , bool ipAdreesPage)
 {
+  String refreshSting = ipAdreesPage ?  " "  : "<meta http-equiv=\"refresh\" content=\"5;/\" />" ;
+  String buttonString = ipAdreesPage ? "ok" : "Reset" ;
+  String itemString = ipAdreesPage ? "" : "Item" ;
+  String bottomString = ipAdreesPage ? "Server IP" : "Is Checked" ;
+  String stringSize = ipAdreesPage ? "50" : "100";
+
   return "<DOCTYPE html>"\
          "<html lang=\"en\">"\
          "<head>"\
          "<meta charset=\"UTF-8\">"\
-         "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">"\
-         "<meta http-equiv=\"refresh\" content=\"5;/\" />"\
-         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"\
+         "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" + refreshSting + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"\
          "<title>Boards Counter</title>"\
          "<style>"\
          "* {"\
          "padding: 0;"\
          "margin: 0;"\
          "font-weight: bold;"\
+         "font-family: 'Calibri'"\
          "}"\
          "body {"\
          "background-color: rgb(34, 45, 57);"\
@@ -483,7 +539,7 @@ String returnHtml(int value)
          "}"\
          "#value {"\
          "color: #0AD666;"\
-         "font-size: 100px;"\
+         "font-size: " + stringSize + "px;"\
          "}"\
          "#footer {"\
          "width: 100%;"\
@@ -493,16 +549,19 @@ String returnHtml(int value)
          "background-color: white;"\
          "color: rgb(34, 45, 57);"\
          "text-align: center;}"\
+         ".config_form {"\
+         "     display: none;"\
+         "}"\
          "</style>"\
          "</head>"\
          "<body>"\
          "<div class=\"NavBar\">"\
          "<p1>Elswedey Electric</p1>"\
-         "<div id=\"reset\"><a href=\"/reset\"><button class=\"button\">Reset</button></a></div>"\
+         "<div id=\"reset\"><a href=\"/reset\"><button class=\"button\">" + buttonString + "</button></a></div>"\
          "</div>"\
          "<div class=\"mainScreen\">"\
-         "<p><span id=\"value\">" + String(value) + "</span> Item</p>"\
-         "<p1>Is Checked</p1>"\
+         "<p><span id=\"value\">" + value + "</span>" + itemString + "</p>"\
+         "<p1>" + bottomString + "</p1>"\
          "</div>"\
          "<section id=\"footer\">"\
          "Powered By EME IH"\
@@ -561,9 +620,11 @@ void updateViaOta()
   WiFiClient client;
 
 #ifdef ESP8266
+  // Serial.println("updating ESP8266");
   t_httpUpdate_return ret = ESPhttpUpdate.update(client , url, CodeVersion);
 #endif
 #ifdef ESP32
+  //Serial.println("updating ESP32");
   t_httpUpdate_return ret = httpUpdate.update(client , url, CodeVersion);
 #endif
 
@@ -583,5 +644,20 @@ void updateViaOta()
       break;
   }
   Serial.println("Done!..");
+}
+
+IPAddress get_sweet_ip(IPAddress given , IPAddress subnet) {
+  String given_str = given.toString();
+  String subnet_str = subnet.toString();
+  subnet_str = subnet[3];
+
+  if (subnet_str == "0") {
+    Serial.println("done");
+    IPAddress returned_ip(given[0], given[1], given[2], 200);
+    return returned_ip;
+  }
+  else {
+    return given;
+  }
 }
 /********************************************** Congratulation *********************************************/

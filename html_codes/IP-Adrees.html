@@ -1,0 +1,118 @@
+<DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <!-- <meta http-equiv="refresh" content="5;/" /> -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Boards Counter</title>
+        <style>
+            * {
+                padding: 0;
+                margin: 0;
+                font-weight: bold;
+                font-family: 'Calibri'
+            }
+
+            body {
+                background-color: rgb(34, 45, 57);
+            }
+
+            .NavBar {
+                background-color: #0AD666;
+                padding: 20px 10px;
+            }
+
+            .NavBar p1 {
+                color: rgb(34, 45, 57);
+                font-size: 25px;
+            }
+
+            #reset {
+                height: 50px;
+                display: inline;
+                position: absolute;
+                margin-right: 10px;
+                right: 0px;
+                top: 12px;
+            }
+
+            .NavBar button {
+                background-color: rgb(34, 45, 57);
+                color: #0AD666;
+                border: 0;
+                border-radius: 25px;
+                padding: 15px;
+                font-size: 18px;
+            }
+
+            .NavBar button:hover {
+                background-color: gray;
+            }
+
+            .mainScreen {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translateX(-50%) translateY(-50%);
+                text-align: center;
+                border-radius: 25px;
+                padding: 10px;
+            }
+
+            .mainScreen p1 {
+                color: white;
+                font-size: 60px;
+            }
+
+            .mainScreen p {
+                color: white;
+                font-size: 30px;
+            }
+
+            #value {
+                color: #0AD666;
+                font-size: 100px;
+            }
+
+            #footer {
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                padding: 10px;
+                background-color: white;
+                color: rgb(34, 45, 57);
+                text-align: center;
+            }
+            #config_form {
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="NavBar">
+            <p1>Elswedey Electric</p1>
+            <div id="reset"><a href="/reset"><button class="button">OK</button></a></div>
+        </div>
+        <div class="mainScreen">
+            <p><span id="value">192.168.1.1</span></p>
+            <p1>Server IP</p1>
+        </div>
+        <section id="footer">
+            Powered By EME IH
+        </section>
+
+        <script>
+            window.onload = function () {
+                if (!window.location.hash) {
+                    window.location = window.location + '#/';
+                    window.location.reload();
+                }
+            }
+        </script>
+
+    </body>
+
+    </html>"
